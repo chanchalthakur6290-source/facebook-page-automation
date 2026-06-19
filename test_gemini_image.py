@@ -12,6 +12,10 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+if not GEMINI_API_KEY:
+    print("❌ GEMINI_API_KEY not found")
+    exit(1)
+
 # ==========================
 # GEMINI CLIENT
 # ==========================
@@ -24,32 +28,53 @@ client = genai.Client(
 # FOLDERS & FILES
 # ==========================
 
-image_folder = "image"
-posted_file = "posted_images.txt"
+IMAGE_FOLDER = "image"
+POSTED_FILE = "posted_images.txt"
 
-os.makedirs(image_folder, exist_ok=True)
+os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-if not os.path.exists(posted_file):
-    open(posted_file, "w").close()
+if not os.path.exists(POSTED_FILE):
+    with open(POSTED_FILE, "w", encoding="utf-8"):
+        pass
 
 # ==========================
-# LOAD IMAGES
+# LOAD ALL IMAGES
 # ==========================
 
 all_images = [
-    file for file in os.listdir(image_folder)
-    if file.lower().endswith((".jpg", ".jpeg", ".png"))
+    file for file in os.listdir(IMAGE_FOLDER)
+    if file.lower().endswith(
+        (".jpg", ".jpeg", ".png")
+    )
 ]
 
-with open(posted_file, "r", encoding="utf-8") as f:
+if not all_images:
+    print("❌ No images found in image folder")
+    exit(1)
+
+# ==========================
+# LOAD POST HISTORY
+# ==========================
+
+with open(
+    POSTED_FILE,
+    "r",
+    encoding="utf-8"
+) as file:
+
     posted_images = [
         line.strip()
-        for line in f.readlines()
+        for line in file.readlines()
         if line.strip()
     ]
 
+# ==========================
+# AVAILABLE IMAGES
+# ==========================
+
 available_images = [
-    img for img in all_images
+    img
+    for img in all_images
     if img not in posted_images
 ]
 
@@ -61,36 +86,49 @@ if not available_images:
 # RANDOM IMAGE
 # ==========================
 
-random_image = random.choice(available_images)
+random_image = random.choice(
+    available_images
+)
 
 image_path = os.path.join(
-    image_folder,
+    IMAGE_FOLDER,
     random_image
 )
 
 print(f"📸 Selected Image: {random_image}")
 
+# ==========================
+# SAVE IMAGE PATH
+# ==========================
+
 with open(
     "selected_image.txt",
     "w",
     encoding="utf-8"
-) as f:
-    f.write(image_path)
+) as file:
+
+    file.write(image_path)
 
 # ==========================
 # LOAD IMAGE
 # ==========================
 
-image = Image.open(image_path)
+try:
+    image = Image.open(image_path)
+
+except Exception as e:
+
+    print(f"❌ Image Error: {e}")
+    exit(1)
 
 # ==========================
 # PROMPT
 # ==========================
 
 prompt = """
-Is image ko analyze karo.
+Is image ko analyse karo.
 
-Facebook Page post ke liye Hindi me do:
+Facebook page post ke liye Hindi me likho:
 
 1. Ek attractive title
 2. 2-3 line description
@@ -113,15 +151,25 @@ Format:
 """
 
 # ==========================
-# GENERATE POST
+# GENERATE CONTENT
 # ==========================
 
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=[prompt, image]
-)
+try:
 
-result = response.text
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            prompt,
+            image
+        ]
+    )
+
+    result = response.text
+
+except Exception as e:
+
+    print(f"❌ Gemini Error: {e}")
+    exit(1)
 
 # ==========================
 # SAVE POST
@@ -132,7 +180,33 @@ with open(
     "w",
     encoding="utf-8"
 ) as file:
+
     file.write(result)
 
-print("\n✅ post.txt created")
-print("✅ selected_image.txt created")
+print("✅ post.txt created")
+
+# ==========================
+# SAVE HISTORY
+# ==========================
+
+with open(
+    POSTED_FILE,
+    "a",
+    encoding="utf-8"
+) as file:
+
+    file.write(
+        random_image + "\n"
+    )
+
+print(
+    f"✅ Added To History: {random_image}"
+)
+
+print(
+    "✅ selected_image.txt created"
+)
+
+print(
+    "\n🎉 Post Generated Successfully"
+)
