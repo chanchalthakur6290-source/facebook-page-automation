@@ -1,0 +1,5 @@
+.env
+used_images/
+__pycache__/
+selected_image.txt
+post.txt
