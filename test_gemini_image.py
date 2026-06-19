@@ -21,17 +21,19 @@ client = genai.Client(
 )
 
 # ==========================
-# FOLDERS
+# FOLDERS & FILES
 # ==========================
 
 image_folder = "image"
-used_folder = "used_images"
+posted_file = "posted_images.txt"
 
 os.makedirs(image_folder, exist_ok=True)
-os.makedirs(used_folder, exist_ok=True)
+
+if not os.path.exists(posted_file):
+    open(posted_file, "w").close()
 
 # ==========================
-# AVAILABLE IMAGES
+# LOAD IMAGES
 # ==========================
 
 all_images = [
@@ -39,18 +41,20 @@ all_images = [
     if file.lower().endswith((".jpg", ".jpeg", ".png"))
 ]
 
-used_images = [
-    file for file in os.listdir(used_folder)
-    if file.lower().endswith((".jpg", ".jpeg", ".png"))
-]
+with open(posted_file, "r", encoding="utf-8") as f:
+    posted_images = [
+        line.strip()
+        for line in f.readlines()
+        if line.strip()
+    ]
 
 available_images = [
     img for img in all_images
-    if img not in used_images
+    if img not in posted_images
 ]
 
 if not available_images:
-    print("❌ Sab images use ho chuki hain.")
+    print("❌ Sab images post ho chuki hain.")
     exit(1)
 
 # ==========================
@@ -65,8 +69,6 @@ image_path = os.path.join(
 )
 
 print(f"📸 Selected Image: {random_image}")
-
-# Save selected image path
 
 with open(
     "selected_image.txt",
@@ -111,7 +113,7 @@ Format:
 """
 
 # ==========================
-# GENERATE CONTENT
+# GENERATE POST
 # ==========================
 
 response = client.models.generate_content(
@@ -132,7 +134,5 @@ with open(
 ) as file:
     file.write(result)
 
-print("\n✅ post.txt successfully created")
-print("✅ selected_image.txt successfully created")
-print("\n========== GENERATED POST ==========\n")
-print(result)
+print("\n✅ post.txt created")
+print("✅ selected_image.txt created")

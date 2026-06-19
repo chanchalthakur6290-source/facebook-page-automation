@@ -1,14 +1,18 @@
+```yaml
 name: Facebook Auto Post
 
 on:
   schedule:
-    - cron: '30 1 * * *'   # 7:00 AM India
-    - cron: '30 7 * * *'   # 1:00 PM India
-    - cron: '30 13 * * *'  # 7:00 PM India
+    - cron: '30 1 * * *'     # 7:00 AM India
+    - cron: '30 7 * * *'     # 1:00 PM India
+    - cron: '30 13 * * *'    # 7:00 PM India
+
   workflow_dispatch:
 
 jobs:
+
   post:
+
     runs-on: ubuntu-latest
 
     env:
@@ -17,7 +21,8 @@ jobs:
       PAGE_ID: ${{ secrets.PAGE_ID }}
 
     steps:
-      - name: Checkout Repo
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -27,8 +32,23 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests python-dotenv pillow google-genai
+          pip install requests
+          pip install python-dotenv
+          pip install pillow
+          pip install google-genai
 
       - name: Run Automation
         run: |
           python main.py
+
+      - name: Commit Updated Files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git add posted_images.txt
+
+          git diff --staged --quiet || git commit -m "Update posted images"
+
+          git push
+```

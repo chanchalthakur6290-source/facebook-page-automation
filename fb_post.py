@@ -1,10 +1,9 @@
 import os
-import shutil
 import requests
 from dotenv import load_dotenv
 
 # ==================================
-# LOAD .ENV
+# LOAD ENV VARIABLES
 # ==================================
 
 load_dotenv()
@@ -13,7 +12,7 @@ PAGE_ID = os.getenv("PAGE_ID")
 ACCESS_TOKEN = os.getenv("FACEBOOK_TOKEN")
 
 # ==================================
-# CHECK VARIABLES
+# CHECK ENV VARIABLES
 # ==================================
 
 if not PAGE_ID:
@@ -29,10 +28,17 @@ if not ACCESS_TOKEN:
 # ==================================
 
 try:
-    with open("post.txt", "r", encoding="utf-8") as file:
+
+    with open(
+        "post.txt",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
         caption = file.read().strip()
 
 except Exception as e:
+
     print(f"❌ post.txt error: {e}")
     exit(1)
 
@@ -41,10 +47,17 @@ except Exception as e:
 # ==================================
 
 try:
-    with open("selected_image.txt", "r", encoding="utf-8") as file:
+
+    with open(
+        "selected_image.txt",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
         image_path = file.read().strip()
 
 except Exception as e:
+
     print(f"❌ selected_image.txt error: {e}")
     exit(1)
 
@@ -53,6 +66,7 @@ except Exception as e:
 # ==================================
 
 if not os.path.exists(image_path):
+
     print("❌ Image not found")
     print(image_path)
     exit(1)
@@ -101,6 +115,36 @@ if response.status_code == 200:
 
     print("\n✅ Facebook Post Successful")
 
+    image_name = os.path.basename(
+        image_path
+    )
+
+    # ==================================
+    # SAVE IMAGE NAME
+    # ==================================
+
+    try:
+
+        with open(
+            "posted_images.txt",
+            "a",
+            encoding="utf-8"
+        ) as file:
+
+            file.write(
+                image_name + "\n"
+            )
+
+        print(
+            f"✅ {image_name} saved in posted_images.txt"
+        )
+
+    except Exception as e:
+
+        print(
+            f"⚠ Save Failed: {e}"
+        )
+
     # ==================================
     # AUTO COMMENT
     # ==================================
@@ -138,52 +182,21 @@ Comment me apni rai jarur bataye.
                 data=comment_data
             )
 
-            print("\n💬 Comment Response:")
-            print(comment_response.text)
+            print(
+                "\n💬 Comment Response:"
+            )
 
-    except Exception as e:
-
-        print(f"\n⚠ Comment Failed: {e}")
-
-    # ==================================
-    # MOVE IMAGE
-    # ==================================
-
-    try:
-
-        used_folder = "used_images"
-
-        os.makedirs(
-            used_folder,
-            exist_ok=True
-        )
-
-        image_name = os.path.basename(
-            image_path
-        )
-
-        destination = os.path.join(
-            used_folder,
-            image_name
-        )
-
-        shutil.move(
-            image_path,
-            destination
-        )
-
-        print(
-            f"\n✅ {image_name} moved to used_images"
-        )
+            print(
+                comment_response.text
+            )
 
     except Exception as e:
 
         print(
-            f"\n⚠ Move Failed: {e}"
+            f"\n⚠ Comment Failed: {e}"
         )
 
 else:
 
     print("\n❌ Upload Failed")
-    print("❌ Image NOT moved")
     exit(1)
