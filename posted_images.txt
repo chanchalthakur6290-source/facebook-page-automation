@@ -1,1 +1,7 @@
 pic1.png
+<<<<<<< HEAD
+=======
+pic1.png
+pic2.png
+pic2.png
+>>>>>>> 407e35f00ff9c0b857d26a0671e1a2761966f2a4
