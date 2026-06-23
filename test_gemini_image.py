@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from dotenv import load_dotenv
 from google import genai
 from PIL import Image
@@ -25,31 +26,49 @@ client = genai.Client(
 )
 
 # ==========================
-# FOLDERS & FILES
+# FILES & FOLDERS
 # ==========================
 
 IMAGE_FOLDER = "image"
 POSTED_FILE = "posted_images.txt"
 
-os.makedirs(IMAGE_FOLDER, exist_ok=True)
+os.makedirs(
+    IMAGE_FOLDER,
+    exist_ok=True
+)
 
-if not os.path.exists(POSTED_FILE):
-    with open(POSTED_FILE, "w", encoding="utf-8"):
-        pass
+if not os.path.exists(
+    POSTED_FILE
+):
+    open(
+        POSTED_FILE,
+        "w"
+    ).close()
 
 # ==========================
 # LOAD ALL IMAGES
 # ==========================
 
 all_images = [
-    file for file in os.listdir(IMAGE_FOLDER)
+    file
+    for file in os.listdir(
+        IMAGE_FOLDER
+    )
     if file.lower().endswith(
-        (".jpg", ".jpeg", ".png")
+        (
+            ".jpg",
+            ".jpeg",
+            ".png"
+        )
     )
 ]
 
 if not all_images:
-    print("❌ No images found in image folder")
+
+    print(
+        "❌ No images found in image folder"
+    )
+
     exit(1)
 
 # ==========================
@@ -79,7 +98,11 @@ available_images = [
 ]
 
 if not available_images:
-    print("❌ Sab images post ho chuki hain.")
+
+    print(
+        "❌ Sab images post ho chuki hain."
+    )
+
     exit(1)
 
 # ==========================
@@ -95,7 +118,9 @@ image_path = os.path.join(
     random_image
 )
 
-print(f"📸 Selected Image: {random_image}")
+print(
+    f"\n📸 Selected Image: {random_image}"
+)
 
 # ==========================
 # SAVE IMAGE PATH
@@ -107,18 +132,26 @@ with open(
     encoding="utf-8"
 ) as file:
 
-    file.write(image_path)
+    file.write(
+        image_path
+    )
 
 # ==========================
 # LOAD IMAGE
 # ==========================
 
 try:
-    image = Image.open(image_path)
+
+    image = Image.open(
+        image_path
+    )
 
 except Exception as e:
 
-    print(f"❌ Image Error: {e}")
+    print(
+        f"❌ Image Error: {e}"
+    )
+
     exit(1)
 
 # ==========================
@@ -151,25 +184,61 @@ Format:
 """
 
 # ==========================
-# GENERATE CONTENT
+# GEMINI RETRY SYSTEM
 # ==========================
 
-try:
+MAX_RETRIES = 10
+result = None
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[
-            prompt,
-            image
-        ]
-    )
+for attempt in range(
+    MAX_RETRIES
+):
 
-    result = response.text
+    try:
 
-except Exception as e:
+        print(
+            f"\n🤖 Gemini Attempt {attempt + 1}/{MAX_RETRIES}"
+        )
 
-    print(f"❌ Gemini Error: {e}")
-    exit(1)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                prompt,
+                image
+            ]
+        )
+
+        result = response.text
+
+        print(
+            "✅ Content Generated"
+        )
+
+        break
+
+    except Exception as e:
+
+        print(
+            f"❌ Gemini Error: {e}"
+        )
+
+        if attempt < MAX_RETRIES - 1:
+
+            print(
+                "⏳ Waiting 60 seconds..."
+            )
+
+            time.sleep(
+                60
+            )
+
+        else:
+
+            print(
+                "❌ All Gemini retries failed"
+            )
+
+            exit(1)
 
 # ==========================
 # SAVE POST
@@ -181,27 +250,39 @@ with open(
     encoding="utf-8"
 ) as file:
 
-    file.write(result)
+    file.write(
+        result
+    )
 
-print("✅ post.txt created")
+print(
+    "\n✅ post.txt created"
+)
 
 # ==========================
 # SAVE HISTORY
 # ==========================
 
-with open(
-    POSTED_FILE,
-    "a",
-    encoding="utf-8"
-) as file:
+if random_image not in posted_images:
 
-    file.write(
-        random_image + "\n"
+    with open(
+        POSTED_FILE,
+        "a",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            random_image + "\n"
+        )
+
+    print(
+        f"✅ Added To History: {random_image}"
     )
 
-print(
-    f"✅ Added To History: {random_image}"
-)
+else:
+
+    print(
+        f"⚠ Already exists in history: {random_image}"
+    )
 
 print(
     "✅ selected_image.txt created"
