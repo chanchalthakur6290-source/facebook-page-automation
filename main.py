@@ -2,7 +2,6 @@ import os
 import time
 import requests
 
-
 # ==========================
 # CHECK INTERNET
 # ==========================
@@ -17,84 +16,102 @@ def internet_available():
     except:
         return False
 
-
 # ==========================
-# MAIN PROGRAM
+# INTERNET WAIT SYSTEM
 # ==========================
 
 print("🌐 Checking Internet Connection...")
 
-retry_count = 12  # 12 x 5 min = 60 min
+internet_retry = 12  # 12 x 5 min = 60 min
 
-for i in range(retry_count):
+for i in range(internet_retry):
 
     if internet_available():
 
         print("✅ Internet Connected")
+        break
 
-        # ==========================
-        # STEP 1 - GENERATE POST
-        # ==========================
+    print(
+        f"❌ No Internet ({i+1}/{internet_retry})"
+    )
 
-        print("\n📸 Step 1: Generating Post...")
+    print(
+        "⏳ Retrying after 5 minutes..."
+    )
 
-        generate_result = os.system(
-            "python test_gemini_image.py"
-        )
+    time.sleep(300)
 
-        if generate_result != 0:
+else:
+
+    print(
+        "\n❌ Internet not available for 1 hour."
+    )
+
+    exit(1)
+
+# ==========================
+# STEP 1 - GENERATE POST
+# ==========================
+
+MAX_GEMINI_RETRIES = 10
+
+for attempt in range(MAX_GEMINI_RETRIES):
+
+    print(
+        f"\n📸 Step 1: Generating Post ({attempt+1}/{MAX_GEMINI_RETRIES})"
+    )
+
+    generate_result = os.system(
+        "python test_gemini_image.py"
+    )
+
+    if generate_result == 0:
+
+        if os.path.exists("post.txt") and os.path.exists("selected_image.txt"):
 
             print(
-                "\n❌ Post Generation Failed"
+                "✅ Post Generated Successfully"
             )
 
             break
 
-        # Check files created
+    print(
+        "❌ Gemini Generation Failed"
+    )
 
-        if not os.path.exists(
-            "post.txt"
-        ):
-
-            print(
-                "\n❌ post.txt not found"
-            )
-
-            break
-
-        if not os.path.exists(
-            "selected_image.txt"
-        ):
-
-            print(
-                "\n❌ selected_image.txt not found"
-            )
-
-            break
-
-        # ==========================
-        # STEP 2 - FACEBOOK UPLOAD
-        # ==========================
+    if attempt < MAX_GEMINI_RETRIES - 1:
 
         print(
-            "\n🚀 Step 2: Uploading To Facebook..."
+            "⏳ Waiting 60 seconds and retrying..."
         )
 
-        upload_result = os.system(
-            "python fb_post.py"
-        )
+        time.sleep(60)
 
-        if upload_result != 0:
+else:
 
-            print(
-                "\n❌ Facebook Upload Failed"
-            )
+    print(
+        "\n❌ All Gemini retries failed"
+    )
 
-            break
+    exit(1)
 
-        # ==========================
-        # SUCCESS
-        # ==========================
+# ==========================
+# STEP 2 - FACEBOOK UPLOAD
+# ==========================
+
+MAX_FB_RETRIES = 5
+
+for attempt in range(MAX_FB_RETRIES):
+
+    print(
+        f"\n🚀 Uploading To Facebook ({attempt+1}/{MAX_FB_RETRIES})"
+    )
+
+    upload_result = os.system(
+        "python fb_post.py"
+    )
+
+    if upload_result == 0:
 
         print(
             "\n🎉 Automation Completed Successfully"
@@ -102,20 +119,24 @@ for i in range(retry_count):
 
         break
 
-    else:
+    print(
+        "❌ Facebook Upload Failed"
+    )
+
+    if attempt < MAX_FB_RETRIES - 1:
 
         print(
-            f"❌ No Internet ({i+1}/{retry_count})"
+            "⏳ Waiting 60 seconds..."
         )
 
-        print(
-            "⏳ Retrying after 5 minutes...\n"
-        )
-
-        time.sleep(300)
+        time.sleep(60)
 
 else:
 
     print(
-        "\n❌ Internet not available for 1 hour."
+        "\n❌ Facebook upload failed after all retries"
     )
+
+    exit(1)
+
+print("\n✅ Workflow Finished Successfully")

@@ -187,58 +187,73 @@ Format:
 # GEMINI RETRY SYSTEM
 # ==========================
 
+MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash"
+]
+
 MAX_RETRIES = 10
+
 result = None
 
-for attempt in range(
-    MAX_RETRIES
-):
+for model_name in MODELS:
 
-    try:
+    print(
+        f"\n🤖 Trying Model: {model_name}"
+    )
 
-        print(
-            f"\n🤖 Gemini Attempt {attempt + 1}/{MAX_RETRIES}"
-        )
+    for attempt in range(
+        MAX_RETRIES
+    ):
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
-                prompt,
-                image
-            ]
-        )
+        try:
 
-        result = response.text
+            print(
+                f"Attempt {attempt+1}/{MAX_RETRIES}"
+            )
 
-        print(
-            "✅ Content Generated"
-        )
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    prompt,
+                    image
+                ]
+            )
 
+            result = response.text
+
+            print(
+                "✅ Content Generated"
+            )
+
+            break
+
+        except Exception as e:
+
+            print(
+                f"❌ Gemini Error: {e}"
+            )
+
+            if attempt < MAX_RETRIES - 1:
+
+                print(
+                    "⏳ Waiting 60 seconds..."
+                )
+
+                time.sleep(
+                    60
+                )
+
+    if result:
         break
 
-    except Exception as e:
+if not result:
 
-        print(
-            f"❌ Gemini Error: {e}"
-        )
+    print(
+        "❌ All Gemini models failed"
+    )
 
-        if attempt < MAX_RETRIES - 1:
-
-            print(
-                "⏳ Waiting 60 seconds..."
-            )
-
-            time.sleep(
-                60
-            )
-
-        else:
-
-            print(
-                "❌ All Gemini retries failed"
-            )
-
-            exit(1)
+    exit(1)
 
 # ==========================
 # SAVE POST
@@ -257,32 +272,6 @@ with open(
 print(
     "\n✅ post.txt created"
 )
-
-# ==========================
-# SAVE HISTORY
-# ==========================
-
-if random_image not in posted_images:
-
-    with open(
-        POSTED_FILE,
-        "a",
-        encoding="utf-8"
-    ) as file:
-
-        file.write(
-            random_image + "\n"
-        )
-
-    print(
-        f"✅ Added To History: {random_image}"
-    )
-
-else:
-
-    print(
-        f"⚠ Already exists in history: {random_image}"
-    )
 
 print(
     "✅ selected_image.txt created"
